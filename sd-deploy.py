@@ -16,7 +16,7 @@
 import sys
 
 if len(sys.argv) < 5:
-	print 'Usage: python sd-deploy.py [API URL] [SD URL] [username] [password] [[init]]'
+	print('Usage: python sd-deploy.py [API URL] [SD URL] [username] [password] [[init]]')
 	sys.exit(2)	
 
 #
@@ -29,47 +29,47 @@ import socket
 try:
 	serverIp = socket.gethostbyname(socket.gethostname())
 	
-except socket.error, e:
-	print 'Unable to get server IP: ' + str(e)
+except socket.error as e:
+	print(('Unable to get server IP: ' + str(e)))
 	sys.exit(2)
 	
 # Hostname
 try:
 	serverHostname = hostname = socket.getfqdn()
 	
-except socket.error, e:
-	print 'Unable to get server hostname: ' + str(e)
+except socket.error as e:
+	print(('Unable to get server hostname: ' + str(e)))
 	sys.exit(2)
 
 #
 # Get latest agent version
 #
 
-print '1/4: Downloading latest agent version';
+print('1/4: Downloading latest agent version');
 		
-import httplib
-import urllib2
+import http.client
+import urllib.request, urllib.error, urllib.parse
 
 # Request details
 try: 
-	requestAgent = urllib2.urlopen('http://www.serverdensity.com/agentupdate/')
+	requestAgent = urllib.request.urlopen('http://www.serverdensity.com/agentupdate/')
 	responseAgent = requestAgent.read()
 	
-except urllib2.HTTPError, e:
-	print 'Unable to get latest version info - HTTPError = ' + str(e)
+except urllib.error.HTTPError as e:
+	print(('Unable to get latest version info - HTTPError = ' + str(e)))
 	sys.exit(2)
 	
-except urllib2.URLError, e:
-	print 'Unable to get latest version info - URLError = ' + str(e)
+except urllib.error.URLError as e:
+	print(('Unable to get latest version info - URLError = ' + str(e)))
 	sys.exit(2)
 	
-except httplib.HTTPException, e:
-	print 'Unable to get latest version info - HTTPException'
+except http.client.HTTPException as e:
+	print('Unable to get latest version info - HTTPException')
 	sys.exit(2)
 	
-except Exception, e:
+except Exception as e:
 	import traceback
-	print 'Unable to get latest version info - Exception = ' + traceback.format_exc()
+	print(('Unable to get latest version info - Exception = ' + traceback.format_exc()))
 	sys.exit(2)
 
 #
@@ -77,12 +77,12 @@ except Exception, e:
 #
 
 import md5 # I know this is depreciated, but we still support Python 2.4 and hashlib is only in 2.5. Case 26918
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 def downloadFile(agentFile, recursed = False):
-	print 'Downloading ' + agentFile['name']
+	print(('Downloading ' + agentFile['name']))
 	
-	downloadedFile = urllib.urlretrieve('http://www.serverdensity.com/downloads/sd-agent/' + agentFile['name'])
+	downloadedFile = urllib.request.urlretrieve('http://www.serverdensity.com/downloads/sd-agent/' + agentFile['name'])
 	
 	# Do md5 check to make sure the file downloaded properly
 	checksum = md5.new()
@@ -110,7 +110,7 @@ def downloadFile(agentFile, recursed = False):
 			downloadFile(agentFile, True)
 		
 		else:
-			print agentFile['name'] + ' did not match its checksum - it is corrupted. This may be caused by network issues so please try again in a moment.'
+			print((agentFile['name'] + ' did not match its checksum - it is corrupted. This may be caused by network issues so please try again in a moment.'))
 			sys.exit(2)
 
 #
@@ -130,8 +130,8 @@ if int(pythonVersion[1]) >= 6: # Don't bother checking major version since we on
 	
 	try:
 		updateInfo = json.loads(responseAgent)
-	except Exception, e:
-		print 'Unable to get latest version info. Try again later.'
+	except Exception as e:
+		print('Unable to get latest version info. Try again later.')
 		sys.exit(2)
 	
 else:
@@ -139,8 +139,8 @@ else:
 	
 	try:
 		updateInfo = minjson.safeRead(responseAgent)
-	except Exception, e:
-		print 'Unable to get latest version info. Try again later.'
+	except Exception as e:
+		print('Unable to get latest version info. Try again later.')
 		sys.exit(2)
 
 # Loop through the new files and call the download function
@@ -158,63 +158,63 @@ if os.path.exists('sd-agent/'):
 os.mkdir('sd-agent')
 
 for agentFile in updateInfo['files']:
-	print 'Installing ' + agentFile['name']
+	print(('Installing ' + agentFile['name']))
 	
 	if agentFile['name'] != 'config.cfg':
 		shutil.move(agentFile['tempFile'], 'sd-agent/' + agentFile['name'])
 	
-print 'Agent files downloaded'
+print('Agent files downloaded')
 
 #
 # Call API to add new server
 #
 
-print '2/4: Adding new server'
+print('2/4: Adding new server')
 
 # Build API payload
 import time
 timestamp = time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime())
 
-postData = urllib.urlencode({'name' : serverHostname, 'ip' : serverIp, 'notes' : 'Added by sd-deploy: ' + timestamp })
+postData = urllib.parse.urlencode({'name' : serverHostname, 'ip' : serverIp, 'notes' : 'Added by sd-deploy: ' + timestamp })
 
 # Send request
 try: 	
 	# Password manager
-	mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+	mgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
 	mgr.add_password(None, sys.argv[1] + '/1.0/', sys.argv[3], sys.argv[4])
-	opener = urllib2.build_opener(urllib2.HTTPBasicAuthHandler(mgr), urllib2.HTTPDigestAuthHandler(mgr))
+	opener = urllib.request.build_opener(urllib.request.HTTPBasicAuthHandler(mgr), urllib.request.HTTPDigestAuthHandler(mgr))
 	
-	urllib2.install_opener(opener)
+	urllib.request.install_opener(opener)
 	
 	# Build the request handler
-	requestAdd = urllib2.Request(sys.argv[1] + '/1.0/?account=' + sys.argv[2] + '&c=servers/add', postData, { 'User-Agent' : 'Server Density Deploy' })
+	requestAdd = urllib.request.Request(sys.argv[1] + '/1.0/?account=' + sys.argv[2] + '&c=servers/add', postData, { 'User-Agent' : 'Server Density Deploy' })
 	
 	# Do the request, log any errors
-	responseAdd = urllib2.urlopen(requestAdd)
+	responseAdd = urllib.request.urlopen(requestAdd)
 	
 	readAdd = responseAdd.read()
 		
-except urllib2.HTTPError, e:
-	print 'HTTPError = ' + str(e)
+except urllib.error.HTTPError as e:
+	print(('HTTPError = ' + str(e)))
 	
 	if os.path.exists('sd-agent/'):
 		shutil.rmtree('sd-agent/')
 	
-except urllib2.URLError, e:
-	print 'URLError = ' + str(e)
+except urllib.error.URLError as e:
+	print(('URLError = ' + str(e)))
 	
 	if os.path.exists('sd-agent/'):
 		shutil.rmtree('sd-agent/')
 	
-except httplib.HTTPException, e: # Added for case #26701
-	print 'HTTPException' + str(e)
+except http.client.HTTPException as e: # Added for case #26701
+	print(('HTTPException' + str(e)))
 	
 	if os.path.exists('sd-agent/'):
 		shutil.rmtree('sd-agent/')
 		
-except Exception, e:
+except Exception as e:
 	import traceback
-	print 'Exception = ' + traceback.format_exc()
+	print(('Exception = ' + traceback.format_exc()))
 	
 	if os.path.exists('sd-agent/'):
 		shutil.rmtree('sd-agent/')
@@ -225,8 +225,8 @@ if int(pythonVersion[1]) >= 6: # Don't bother checking major version since we on
 	
 	try:
 		serverInfo = json.loads(readAdd)
-	except Exception, e:
-		print 'Unable to add server.'
+	except Exception as e:
+		print('Unable to add server.')
 		
 		if os.path.exists('sd-agent/'):
 			shutil.rmtree('sd-agent/')
@@ -238,21 +238,21 @@ else:
 	
 	try:
 		serverInfo = minjson.safeRead(readAdd)
-	except Exception, e:
-		print 'Unable to add server.'
+	except Exception as e:
+		print('Unable to add server.')
 		
 		if os.path.exists('sd-agent/'):
 			shutil.rmtree('sd-agent/')
 		
 		sys.exit(2)
 		
-print 'Server added - ID: ' + str(serverInfo['data']['serverId'])
+print(('Server added - ID: ' + str(serverInfo['data']['serverId'])))
 
 #
 # Write config file
 #
 
-print '3/4: Writing config file'
+print('3/4: Writing config file')
 
 configCfg = '[Main]\nsd_url: http://' + sys.argv[2] + '\nagent_key: ' + serverInfo['data']['agentKey'] + '\napache_status_url: http://www.example.com/server-status/?auto'
 
@@ -261,14 +261,14 @@ try:
 	f.write(configCfg)
 	f.close()
 
-except Exception, e:
+except Exception as e:
 	import traceback
-	print 'Exception = ' + traceback.format_exc()
+	print(('Exception = ' + traceback.format_exc()))
 	
 	if os.path.exists('sd-agent/'):
 		shutil.rmtree('sd-agent/')
 
-print 'Config file written'
+print('Config file written')
 
 #
 # Install init.d
@@ -276,37 +276,37 @@ print 'Config file written'
 
 if len(sys.argv) == 6:
 	
-	print '4/4: Installing init.d script'
+	print('4/4: Installing init.d script')
 	
 	shutil.copy('sd-agent.init', '/etc/init.d/sd-agent')
 	
 	import subprocess
 	
-	print 'Setting permissions'
+	print('Setting permissions')
 	
 	df = subprocess.Popen(['chmod', '0755', '/etc/init.d/sd-agent'], stdout=subprocess.PIPE).communicate()[0]
 	
-	print 'chkconfig'
+	print('chkconfig')
 	
 	df = subprocess.Popen(['chkconfig', '--add', 'sd-agent'], stdout=subprocess.PIPE).communicate()[0]
 	
-	print 'Setting paths'
+	print('Setting paths')
 	
 	path = os.path.realpath(__file__)
 	path = os.path.dirname(path)
 	
 	df = subprocess.Popen(['ln', '-s', path + '/sd-agent/', '/usr/bin/sd-agent'], stdout=subprocess.PIPE).communicate()[0]
 	
-	print 'Install completed'
+	print('Install completed')
 	
-	print 'Launch: /etc/init.d/sd-agent start'
+	print('Launch: /etc/init.d/sd-agent start')
 	
 else:
 	
-	print '4/4: Not installing init.d script'
-	print 'Install completed'
+	print('4/4: Not installing init.d script')
+	print('Install completed')
 	
 	path = os.path.realpath(__file__)
 	path = os.path.dirname(path)
 	
-	print 'Launch: python ' + path + '/sd-agent/agent.py start'
+	print('Launch: python ' + path + '/sd-agent/agent.py start')

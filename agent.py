@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3.1
 '''
 	Server Density
 	www.serverdensity.com
@@ -17,7 +17,7 @@ agentConfig['checkFreq'] = 5
 agentConfig['version'] = '1.6.0'
 
 # Core modules
-import ConfigParser
+import configparser
 import logging
 import os
 import re
@@ -26,12 +26,6 @@ import subprocess
 import sys
 import time
 
-# Check we're not using an old version of Python. We need 2.4 above because some modules (like subprocess)
-# were only introduced in 2.4.
-if int(sys.version_info[1]) <= 3:
-	print 'You are using an outdated version of Python. Please update to v2.4 or above (v3 is not supported).'
-	sys.exit(2)
-	
 # Custom modules
 from checks import checks
 from daemon import Daemon
@@ -41,7 +35,7 @@ try:
 	path = os.path.realpath(__file__)
 	path = os.path.dirname(path)
 	
-	config = ConfigParser.ConfigParser()
+	config = configparser.ConfigParser()
 	if os.path.exists('/etc/sd-agent/config.cfg'):
 		config.read('/etc/sd-agent/config.cfg')
 	else:
@@ -100,38 +94,38 @@ try:
 	if config.has_option('Main', 'couchdb_server'):
 		agentConfig['CouchDBServer'] = config.get('Main', 'couchdb_server')
 
-except ConfigParser.NoSectionError, e:
-	print 'Config file not found or incorrectly formatted'
+except configparser.NoSectionError as e:
+	print('Config file not found or incorrectly formatted')
 	sys.exit(2)
 	
-except ConfigParser.ParsingError, e:
-	print 'Config file not found or incorrectly formatted'
+except configparser.ParsingError as e:
+	print('Config file not found or incorrectly formatted')
 	sys.exit(2)
 	
-except ConfigParser.NoOptionError, e:
-	print 'There are some items missing from your config file, but nothing fatal'
+except configparser.NoOptionError as e:
+	print('There are some items missing from your config file, but nothing fatal')
 	
 # Check apache_status_url is not empty (case 27073)
 if agentConfig['apacheStatusUrl'] == None:
-	print 'You must provide a config value for apache_status_url. If you do not wish to use Apache monitoring, leave it as its default value - http://www.example.com/server-status/?auto'
+	print('You must provide a config value for apache_status_url. If you do not wish to use Apache monitoring, leave it as its default value - http://www.example.com/server-status/?auto')
 	sys.exit(2) 
 
 if 'nginxStatusUrl' in agentConfig and agentConfig['nginxStatusUrl'] == None:
-	print 'You must provide a config value for nginx_status_url. If you do not wish to use Nginx monitoring, leave it as its default value - http://www.example.com/nginx_status'
+	print('You must provide a config value for nginx_status_url. If you do not wish to use Nginx monitoring, leave it as its default value - http://www.example.com/nginx_status')
 	sys.exit(2)
 
 if 'MySQLServer' in agentConfig and agentConfig['MySQLServer'] != '' and 'MySQLUser' in agentConfig and agentConfig['MySQLUser'] != '' and 'MySQLPass' in agentConfig and agentConfig['MySQLPass'] != '':
 	try:
 		import MySQLdb
 	except ImportError:
-		print 'You have configured MySQL for monitoring, but the MySQLdb module is not installed.  For more info, see: http://www.serverdensity.com/docs/agent/mysqlstatus/'
+		print('You have configured MySQL for monitoring, but the MySQLdb module is not installed.  For more info, see: http://www.serverdensity.com/docs/agent/mysqlstatus/')
 		sys.exit(2)
 
 if 'MongoDBServer' in agentConfig and agentConfig['MongoDBServer'] != '':
 	try:
 		import pymongo
 	except ImportError:
-		print 'You have configured MongoDB for monitoring, but the pymongo module is not installed.  For more info, see: http://www.serverdensity.com/docs/agent/mongodbstatus/'
+		print('You have configured MongoDB for monitoring, but the pymongo module is not installed.  For more info, see: http://www.serverdensity.com/docs/agent/mongodbstatus/')
 		sys.exit(2)
 
 # Override the generic daemon class to run our checks
@@ -243,41 +237,41 @@ if __name__ == '__main__':
 				pid = None
 				
 			if pid:
-				print 'sd-agent is running as pid %s.' % pid
+				print('sd-agent is running as pid %s.' % pid)
 			else:
-				print 'sd-agent is not running.'
+				print('sd-agent is not running.')
 
 		elif 'update' == sys.argv[1]:
 			mainLogger.debug('Updating agent')
 			
-			import httplib
+			import http.client
 			import platform
-			import urllib2
+			import urllib.request, urllib.error, urllib.parse
 			
-			print 'Checking if there is a new version';
+			print('Checking if there is a new version');
 			
 			# Get the latest version info
 			try: 
 				mainLogger.debug('Update: checking for update')
 				
-				request = urllib2.urlopen('http://www.serverdensity.com/agentupdate/')
+				request = urllib.request.urlopen('http://www.serverdensity.com/agentupdate/')
 				response = request.read()
 				
-			except urllib2.HTTPError, e:
-				print 'Unable to get latest version info - HTTPError = ' + str(e)
+			except urllib.error.HTTPError as e:
+				print('Unable to get latest version info - HTTPError = ' + str(e))
 				sys.exit(2)
 				
-			except urllib2.URLError, e:
-				print 'Unable to get latest version info - URLError = ' + str(e)
+			except urllib.error.URLError as e:
+				print('Unable to get latest version info - URLError = ' + str(e))
 				sys.exit(2)
 				
-			except httplib.HTTPException, e:
-				print 'Unable to get latest version info - HTTPException'
+			except http.client.HTTPException as e:
+				print('Unable to get latest version info - HTTPException')
 				sys.exit(2)
 				
-			except Exception, e:
+			except Exception as e:
 				import traceback
-				print 'Unable to get latest version info - Exception = ' + traceback.format_exc()
+				print('Unable to get latest version info - Exception = ' + traceback.format_exc())
 				sys.exit(2)
 			
 			mainLogger.debug('Update: importing json/minjson')
@@ -295,8 +289,8 @@ if __name__ == '__main__':
 				
 				try:
 					updateInfo = json.loads(response)
-				except Exception, e:
-					print 'Unable to get latest version info. Try again later.'
+				except Exception as e:
+					print('Unable to get latest version info. Try again later.')
 					sys.exit(2)
 				
 			else:
@@ -306,22 +300,22 @@ if __name__ == '__main__':
 				
 				try:
 					updateInfo = minjson.safeRead(response)
-				except Exception, e:
-					print 'Unable to get latest version info. Try again later.'
+				except Exception as e:
+					print('Unable to get latest version info. Try again later.')
 					sys.exit(2)
 			
 			# Do the version check	
 			if updateInfo['version'] != agentConfig['version']:			
 				import md5 # I know this is depreciated, but we still support Python 2.4 and hashlib is only in 2.5. Case 26918
-				import urllib
+				import urllib.request, urllib.parse, urllib.error
 				
-				print 'A new version is available.'
+				print('A new version is available.')
 				
 				def downloadFile(agentFile, recursed = False):
 					mainLogger.debug('Update: downloading ' + agentFile['name'])					
-					print 'Downloading ' + agentFile['name']
+					print('Downloading ' + agentFile['name'])
 					
-					downloadedFile = urllib.urlretrieve('http://www.serverdensity.com/downloads/sd-agent/' + agentFile['name'])
+					downloadedFile = urllib.request.urlretrieve('http://www.serverdensity.com/downloads/sd-agent/' + agentFile['name'])
 					
 					# Do md5 check to make sure the file downloaded properly
 					checksum = md5.new()
@@ -349,7 +343,7 @@ if __name__ == '__main__':
 							downloadFile(agentFile, True)
 						
 						else:
-							print agentFile['name'] + ' did not match its checksum - it is corrupted. This may be caused by network issues so please try again in a moment.'
+							print(agentFile['name'] + ' did not match its checksum - it is corrupted. This may be caused by network issues so please try again in a moment.')
 							sys.exit(2)
 				
 				# Loop through the new files and call the download function
@@ -363,7 +357,7 @@ if __name__ == '__main__':
 				
 				for agentFile in updateInfo['files']:
 					mainLogger.debug('Update: updating ' + agentFile['name'])
-					print 'Updating ' + agentFile['name']
+					print('Updating ' + agentFile['name'])
 					
 					try:
 						if os.path.exists(agentFile['name']):
@@ -372,22 +366,22 @@ if __name__ == '__main__':
 						shutil.move(agentFile['tempFile'], agentFile['name'])
 					
 					except OSError:
-						print 'An OS level error occurred. You will need to manually re-install the agent by downloading the latest version from http://www.serverdensity.com/downloads/sd-agent.tar.gz. You can copy your config.cfg to the new install'
+						print('An OS level error occurred. You will need to manually re-install the agent by downloading the latest version from http://www.serverdensity.com/downloads/sd-agent.tar.gz. You can copy your config.cfg to the new install')
 						sys.exit(2)
 				
 				mainLogger.debug('Update: done')
 				
-				print 'Update completed. Please restart the agent (python agent.py restart).'
+				print('Update completed. Please restart the agent (python agent.py restart).')
 				
 			else:
-				print 'The agent is already up to date'
+				print('The agent is already up to date')
 		
 		else:
-			print 'Unknown command'
+			print('Unknown command')
 			sys.exit(2)
 			
 		sys.exit(0)
 		
 	else:
-		print 'usage: %s start|stop|restart|status|update' % sys.argv[0]
+		print('usage: %s start|stop|restart|status|update' % sys.argv[0])
 		sys.exit(2)

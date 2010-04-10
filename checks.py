@@ -14,7 +14,7 @@
 # http://stackoverflow.com/questions/1052589/how-can-i-parse-the-output-of-proc-net-dev-into-keyvalue-pairs-per-interface-us
 
 # Core modules
-import httplib # Used only for handling httplib.HTTPException (case #26701)
+import http.client # Used only for handling httplib.HTTPException (case #26701)
 import logging
 import logging.handlers
 try:
@@ -26,8 +26,8 @@ import platform
 import re
 import subprocess
 import sys
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
 
 # We need to return the data using JSON. As of Python 2.6+, there is a core JSON
 # module. We have a 2.4/2.5 compatible lib included with the agent but if we're
@@ -41,10 +41,7 @@ headers = {
 	'Accept': 'text/html, */*',
 }
 
-if int(pythonVersion[1]) >= 6: # Don't bother checking major version since we only support v2 anyway
-	import json
-else:
-	import minjson
+import json
 
 class checks:
 	
@@ -69,23 +66,23 @@ class checks:
 			try: 
 				self.checksLogger.debug('getApacheStatus: attempting urlopen')
 				
-				req = urllib2.Request(self.agentConfig['apacheStatusUrl'], None, headers)
-				request = urllib2.urlopen(req)
+				req = urllib.request.Request(self.agentConfig['apacheStatusUrl'], None, headers)
+				request = urllib.request.urlopen(req)
 				response = request.read()
 				
-			except urllib2.HTTPError, e:
+			except urllib.error.HTTPError as e:
 				self.checksLogger.error('Unable to get Apache status - HTTPError = ' + str(e))
 				return False
 				
-			except urllib2.URLError, e:
+			except urllib.error.URLError as e:
 				self.checksLogger.error('Unable to get Apache status - URLError = ' + str(e))
 				return False
 				
-			except httplib.HTTPException, e:
+			except http.client.HTTPException as e:
 				self.checksLogger.error('Unable to get Apache status - HTTPException = ' + str(e))
 				return False
 				
-			except Exception, e:
+			except Exception as e:
 				import traceback
 				self.checksLogger.error('Unable to get Apache status - Exception = ' + traceback.format_exc())
 				return False
@@ -151,7 +148,7 @@ class checks:
 			
 			df = subprocess.Popen(['df', '-k'], stdout=subprocess.PIPE, close_fds=True).communicate()[0] # -k option uses 1024 byte blocks so we can calculate into MB
 			
-		except Exception, e:
+		except Exception as e:
 			import traceback
 			self.checksLogger.error('getDiskUsage: exception = ' + traceback.format_exc())
 			return False
@@ -228,7 +225,7 @@ class checks:
 				loadAvrgProc = open('/proc/loadavg', 'r')
 				uptime = loadAvrgProc.readlines()
 				
-			except IOError, e:
+			except IOError as e:
 				self.checksLogger.error('getLoadAvrgs: exception = ' + str(e))
 				return False
 			
@@ -247,7 +244,7 @@ class checks:
 				
 				uptime = subprocess.Popen(['uptime'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
 				
-			except Exception, e:
+			except Exception as e:
 				import traceback
 				self.checksLogger.error('getLoadAvrgs: exception = ' + traceback.format_exc())
 				return False
@@ -276,7 +273,7 @@ class checks:
 				meminfoProc = open('/proc/meminfo', 'r')
 				lines = meminfoProc.readlines()
 				
-			except IOError, e:
+			except IOError as e:
 				self.checksLogger.error('getMemoryUsage: exception = ' + str(e))
 				return False
 				
@@ -364,7 +361,7 @@ class checks:
 				self.checksLogger.debug('getMemoryUsage: attempting Popen (sysctl)')
 				sysctl = subprocess.Popen(['sysctl', 'vm.swapusage'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
 				
-			except Exception, e:
+			except Exception as e:
 				import traceback
 				self.checksLogger.error('getMemoryUsage: exception = ' + traceback.format_exc())
 				return False
@@ -398,7 +395,7 @@ class checks:
 			try:
 				import MySQLdb
 			
-			except ImportError, e:
+			except ImportError as e:
 				self.checksLogger.debug('getMySQLStatus: unable to import MySQLdb')
 				return False
 				
@@ -406,7 +403,7 @@ class checks:
 			try:
 				db = MySQLdb.connect(self.agentConfig['MySQLServer'], self.agentConfig['MySQLUser'], self.agentConfig['MySQLPass'])
 				
-			except MySQLdb.OperationalError, message:
+			except MySQLdb.OperationalError as message:
 				
 				self.checksLogger.debug('getMySQLStatus: MySQL connection error: ' + str(message))
 				return False
@@ -421,7 +418,7 @@ class checks:
 				cursor.execute('SHOW GLOBAL STATUS LIKE "Connections"')
 				result = cursor.fetchone()
 				
-			except MySQLdb.OperationalError, message:
+			except MySQLdb.OperationalError as message:
 			
 				self.checksLogger.debug('getMySQLStatus: MySQL query error when getting Connections: ' + str(message))
 		
@@ -455,7 +452,7 @@ class checks:
 				cursor.execute('SHOW GLOBAL STATUS LIKE "Created_tmp_disk_tables"')
 				result = cursor.fetchone()
 				
-			except MySQLdb.OperationalError, message:
+			except MySQLdb.OperationalError as message:
 			
 				self.checksLogger.debug('getMySQLStatus: MySQL query error when getting Created_tmp_disk_tables: ' + str(message))
 		
@@ -489,7 +486,7 @@ class checks:
 				cursor.execute('SHOW GLOBAL STATUS LIKE "Max_used_connections"')
 				result = cursor.fetchone()
 				
-			except MySQLdb.OperationalError, message:
+			except MySQLdb.OperationalError as message:
 			
 				self.checksLogger.debug('getMySQLStatus: MySQL query error when getting Max_used_connections: ' + str(message))
 				
@@ -507,7 +504,7 @@ class checks:
 				cursor.execute('SHOW GLOBAL STATUS LIKE "Open_files"')
 				result = cursor.fetchone()
 				
-			except MySQLdb.OperationalError, message:
+			except MySQLdb.OperationalError as message:
 			
 				self.checksLogger.debug('getMySQLStatus: MySQL query error when getting Open_files: ' + str(message))
 				
@@ -525,7 +522,7 @@ class checks:
 				cursor.execute('SHOW GLOBAL STATUS LIKE "Slow_queries"')
 				result = cursor.fetchone()
 				
-			except MySQLdb.OperationalError, message:
+			except MySQLdb.OperationalError as message:
 			
 				self.checksLogger.debug('getMySQLStatus: MySQL query error when getting Slow_queries: ' + str(message))
 		
@@ -559,7 +556,7 @@ class checks:
 				cursor.execute('SHOW GLOBAL STATUS LIKE "Table_locks_waited"')
 				result = cursor.fetchone()
 				
-			except MySQLdb.OperationalError, message:
+			except MySQLdb.OperationalError as message:
 			
 				self.checksLogger.debug('getMySQLStatus: MySQL query error when getting Table_locks_waited: ' + str(message))
 		
@@ -593,7 +590,7 @@ class checks:
 				cursor.execute('SHOW GLOBAL STATUS LIKE "Threads_connected"')
 				result = cursor.fetchone()
 				
-			except MySQLdb.OperationalError, message:
+			except MySQLdb.OperationalError as message:
 			
 				self.checksLogger.debug('getMySQLStatus: MySQL query error when getting Threads_connected: ' + str(message))
 				
@@ -611,7 +608,7 @@ class checks:
 				cursor.execute('SHOW SLAVE STATUS')
 				result = cursor.fetchone()
 				
-			except MySQLdb.OperationalError, message:
+			except MySQLdb.OperationalError as message:
 			
 				self.checksLogger.debug('getMySQLStatus: MySQL query error when getting SHOW SLAVE STATUS: ' + str(message))
 			
@@ -621,7 +618,7 @@ class checks:
 				
 					self.checksLogger.debug('getMySQLStatus: secondsBehindMaster = ' + str(secondsBehindMaster))
 					
-				except IndexError, e:					
+				except IndexError as e:					
 					secondsBehindMaster = None
 					
 					self.checksLogger.debug('getMySQLStatus: secondsBehindMaster empty')
@@ -650,25 +647,25 @@ class checks:
 			try: 
 				self.checksLogger.debug('getNginxStatus: attempting urlopen')
 				
-				req = urllib2.Request(self.agentConfig['nginxStatusUrl'], None, headers)
+				req = urllib.request.Request(self.agentConfig['nginxStatusUrl'], None, headers)
 
 				# Do the request, log any errors
-				request = urllib2.urlopen(req)
+				request = urllib.request.urlopen(req)
 				response = request.read()
 				
-			except urllib2.HTTPError, e:
+			except urllib.error.HTTPError as e:
 				self.checksLogger.error('Unable to get Nginx status - HTTPError = ' + str(e))
 				return False
 				
-			except urllib2.URLError, e:
+			except urllib.error.URLError as e:
 				self.checksLogger.error('Unable to get Nginx status - URLError = ' + str(e))
 				return False
 				
-			except httplib.HTTPException, e:
+			except http.client.HTTPException as e:
 				self.checksLogger.error('Unable to get Nginx status - HTTPException = ' + str(e))
 				return False
 				
-			except Exception, e:
+			except Exception as e:
 				import traceback
 				self.checksLogger.error('Unable to get Nginx status - Exception = ' + traceback.format_exc())
 				return False
@@ -744,32 +741,32 @@ class checks:
 
 		try:
 			self.checksLogger.debug('getRabbitMQStatus: attempting authentication setup')
-			manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
+			manager = urllib.request.HTTPPasswordMgrWithDefaultRealm()
 			manager.add_password(None, self.agentConfig['rabbitMQStatusUrl'], self.agentConfig['rabbitMQUser'], self.agentConfig['rabbitMQPass'])
-			handler = urllib2.HTTPBasicAuthHandler(manager)
-			opener = urllib2.build_opener(handler)
-			urllib2.install_opener(opener)
+			handler = urllib.request.HTTPBasicAuthHandler(manager)
+			opener = urllib.request.build_opener(handler)
+			urllib.request.install_opener(opener)
 
 			self.checksLogger.debug('getRabbitMQStatus: attempting urlopen')
-			req = urllib2.Request(self.agentConfig['rabbitMQStatusUrl'], None, headers)
+			req = urllib.request.Request(self.agentConfig['rabbitMQStatusUrl'], None, headers)
 
 			# Do the request, log any errors
-			request = urllib2.urlopen(req)
+			request = urllib.request.urlopen(req)
 			response = request.read()
 
-		except urllib2.HTTPError, e:
+		except urllib.error.HTTPError as e:
 			self.checksLogger.error('Unable to get RabbitMQ status - HTTPError = ' + str(e))
 			return False
 
-		except urllib2.URLError, e:
+		except urllib.error.URLError as e:
 			self.checksLogger.error('Unable to get RabbitMQ status - URLError = ' + str(e))
 			return False
 
-		except httplib.HTTPException, e:
+		except http.client.HTTPException as e:
 			self.checksLogger.error('Unable to get RabbitMQ status - HTTPException = ' + str(e))
 			return False
 
-		except Exception, e:
+		except Exception as e:
 			import traceback
 			self.checksLogger.error('Unable to get RabbitMQ status - Exception = ' + traceback.format_exc())
 			return False
@@ -784,7 +781,7 @@ class checks:
 				self.checksLogger.debug('getRabbitMQStatus: minjson read')
 				status = minjson.safeRead(response)
 
-		except Exception, e:
+		except Exception as e:
 			import traceback
 			self.checksLogger.error('Unable to load RabbitMQ status JSON - Exception = ' + traceback.format_exc())
 			return False
@@ -813,7 +810,7 @@ class checks:
 
 		try:
 			conn = Connection(self.agentConfig['MongoDBServer'])
-		except Exception, ex:
+		except Exception as ex:
 			import traceback
 			self.checksLogger.error('Unable to connect to MongoDB server - Exception = ' + traceback.format_exc())
 			return False
@@ -825,7 +822,7 @@ class checks:
 				db = conn[dbName]
 				status = db.command('serverStatus') # Shorthand for {'serverStatus': 1}
 				mongodb[dbName] = status
-		except Exception, ex:
+		except Exception as ex:
 			import traceback
 			self.checksLogger.error('Unable to get MongoDB status - Exception = ' + traceback.format_exc())
 			return False
@@ -851,24 +848,24 @@ class checks:
 		try:
 			url = '%s%s' % (self.agentConfig['CouchDBServer'], endpoint)
 			self.checksLogger.debug('getCouchDBStatus: attempting urlopen')
-			req = urllib2.Request(url, None, headers)
+			req = urllib.request.Request(url, None, headers)
 
 			# Do the request, log any errors
-			request = urllib2.urlopen(req)
+			request = urllib.request.urlopen(req)
 			response = request.read()
-		except urllib2.HTTPError, e:
+		except urllib.error.HTTPError as e:
 			self.checksLogger.error('Unable to get CouchDB statistics - HTTPError = ' + str(e))
 			return False
 
-		except urllib2.URLError, e:
+		except urllib.error.URLError as e:
 			self.checksLogger.error('Unable to get CouchDB statistics - URLError = ' + str(e))
 			return False
 
-		except httplib.HTTPException, e:
+		except http.client.HTTPException as e:
 			self.checksLogger.error('Unable to get CouchDB statistics - HTTPException = ' + str(e))
 			return False
 
-		except Exception, e:
+		except Exception as e:
 			import traceback
 			self.checksLogger.error('Unable to get CouchDB statistics - Exception = ' + traceback.format_exc())
 			return False
@@ -883,7 +880,7 @@ class checks:
 				self.checksLogger.debug('getCouchDBStatus: minjson read')
 				stats = minjson.safeRead(response)
 
-		except Exception, e:
+		except Exception as e:
 			import traceback
 			self.checksLogger.error('Unable to load CouchDB database JSON - Exception = ' + traceback.format_exc())
 			return False
@@ -896,24 +893,24 @@ class checks:
 		try:
 			url = '%s%s' % (self.agentConfig['CouchDBServer'], endpoint)
 			self.checksLogger.debug('getCouchDBStatus: attempting urlopen')
-			req = urllib2.Request(url, None, headers)
+			req = urllib.request.Request(url, None, headers)
 
 			# Do the request, log any errors
-			request = urllib2.urlopen(req)
+			request = urllib.request.urlopen(req)
 			response = request.read()
-		except urllib2.HTTPError, e:
+		except urllib.error.HTTPError as e:
 			self.checksLogger.error('Unable to get CouchDB status - HTTPError = ' + str(e))
 			return False
 
-		except urllib2.URLError, e:
+		except urllib.error.URLError as e:
 			self.checksLogger.error('Unable to get CouchDB status - URLError = ' + str(e))
 			return False
 
-		except httplib.HTTPException, e:
+		except http.client.HTTPException as e:
 			self.checksLogger.error('Unable to get CouchDB status - HTTPException = ' + str(e))
 			return False
 
-		except Exception, e:
+		except Exception as e:
 			import traceback
 			self.checksLogger.error('Unable to get CouchDB status - Exception = ' + traceback.format_exc())
 			return False
@@ -928,7 +925,7 @@ class checks:
 				self.checksLogger.debug('getCouchDBStatus: minjson read')
 				databases = minjson.safeRead(response)
 
-		except Exception, e:
+		except Exception as e:
 			import traceback
 			self.checksLogger.error('Unable to load CouchDB database JSON - Exception = ' + traceback.format_exc())
 			return False
@@ -939,24 +936,24 @@ class checks:
 			try:
 				url = '%s%s' % (self.agentConfig['CouchDBServer'], endpoint)
 				self.checksLogger.debug('getCouchDBStatus: attempting urlopen')
-				req = urllib2.Request(url, None, headers)
+				req = urllib.request.Request(url, None, headers)
 
 				# Do the request, log any errors
-				request = urllib2.urlopen(req)
+				request = urllib.request.urlopen(req)
 				response = request.read()
-			except urllib2.HTTPError, e:
+			except urllib.error.HTTPError as e:
 				self.checksLogger.error('Unable to get CouchDB database status - HTTPError = ' + str(e))
 				return False
 
-			except urllib2.URLError, e:
+			except urllib.error.URLError as e:
 				self.checksLogger.error('Unable to get CouchDB database status - URLError = ' + str(e))
 				return False
 
-			except httplib.HTTPException, e:
+			except http.client.HTTPException as e:
 				self.checksLogger.error('Unable to get CouchDB database status - HTTPException = ' + str(e))
 				return False
 
-			except Exception, e:
+			except Exception as e:
 				import traceback
 				self.checksLogger.error('Unable to get CouchDB database status - Exception = ' + traceback.format_exc())
 				return False
@@ -971,7 +968,7 @@ class checks:
 					self.checksLogger.debug('getCouchDBStatus: minjson read')
 					couchdb['databases'][dbName] = minjson.safeRead(response)
 
-			except Exception, e:
+			except Exception as e:
 				import traceback
 				self.checksLogger.error('Unable to load CouchDB database JSON - Exception = ' + traceback.format_exc())
 				return False
@@ -991,7 +988,7 @@ class checks:
 				proc = open('/proc/net/dev', 'r')
 				lines = proc.readlines()
 				
-			except IOError, e:
+			except IOError as e:
 				self.checksLogger.error('getNetworkTraffic: exception = ' + str(e))
 				return False
 			
@@ -1001,8 +998,8 @@ class checks:
 			
 			columnLine = lines[1]
 			_, receiveCols , transmitCols = columnLine.split('|')
-			receiveCols = map(lambda a:'recv_' + a, receiveCols.split())
-			transmitCols = map(lambda a:'trans_' + a, transmitCols.split())
+			receiveCols = ['recv_' + a for a in receiveCols.split()]
+			transmitCols = ['trans_' + a for a in transmitCols.split()]
 			
 			cols = receiveCols + transmitCols
 			
@@ -1012,7 +1009,7 @@ class checks:
 			for line in lines[2:]:
 				if line.find(':') < 0: continue
 				face, data = line.split(':')
-				faceData = dict(zip(cols, data.split()))
+				faceData = dict(list(zip(cols, data.split())))
 				faces[face] = faceData
 			
 			self.checksLogger.debug('getNetworkTraffic: parsed, looping')
@@ -1027,8 +1024,8 @@ class checks:
 				# then the next time we can calculate the difference
 				if key in self.networkTrafficStore:
 					interfaces[key] = {}
-					interfaces[key]['recv_bytes'] = long(faces[face]['recv_bytes']) - long(self.networkTrafficStore[key]['recv_bytes'])
-					interfaces[key]['trans_bytes'] = long(faces[face]['trans_bytes']) - long(self.networkTrafficStore[key]['trans_bytes'])
+					interfaces[key]['recv_bytes'] = int(faces[face]['recv_bytes']) - int(self.networkTrafficStore[key]['recv_bytes'])
+					interfaces[key]['trans_bytes'] = int(faces[face]['trans_bytes']) - int(self.networkTrafficStore[key]['trans_bytes'])
 					
 					interfaces[key]['recv_bytes'] = str(interfaces[key]['recv_bytes'])
 					interfaces[key]['trans_bytes'] = str(interfaces[key]['trans_bytes'])
@@ -1065,7 +1062,7 @@ class checks:
 			
 			ps = subprocess.Popen(['ps', 'aux'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
 			
-		except Exception, e:
+		except Exception as e:
 			import traceback
 			self.checksLogger.error('getProcesses: exception = ' + traceback.format_exc())
 			return False
@@ -1130,7 +1127,7 @@ class checks:
 							
 							plugins.append(name[0])
 							
-					except IndexError, e:
+					except IndexError as e:
 						
 						continue
 			
@@ -1183,26 +1180,26 @@ class checks:
 			self.checksLogger.debug('doPostBack: attempting postback: ' + self.agentConfig['sdUrl'])
 			
 			# Build the request handler
-			request = urllib2.Request(self.agentConfig['sdUrl'] + '/intake/', postBackData, headers)
+			request = urllib.request.Request(self.agentConfig['sdUrl'] + '/intake/', postBackData, headers)
 			
 			# Do the request, log any errors
-			response = urllib2.urlopen(request)
+			response = urllib.request.urlopen(request)
 			
 			self.checksLogger.debug('doPostBack: postback response: ' + str(response.read()))
 				
-		except urllib2.HTTPError, e:
+		except urllib.error.HTTPError as e:
 			self.checksLogger.error('doPostBack: HTTPError = ' + str(e))
 			return False
 			
-		except urllib2.URLError, e:
+		except urllib.error.URLError as e:
 			self.checksLogger.error('doPostBack: URLError = ' + str(e))
 			return False
 			
-		except httplib.HTTPException, e: # Added for case #26701
+		except http.client.HTTPException as e: # Added for case #26701
 			self.checksLogger.error('doPostBack: HTTPException')
 			return False
 				
-		except Exception, e:
+		except Exception as e:
 			import traceback
 			self.checksLogger.error('doPostBack: Exception = ' + traceback.format_exc())
 			return False
@@ -1305,7 +1302,7 @@ class checks:
 		try:
 			checksData['internalHostname'] = socket.gethostname()
 			
-		except socket.error, e:
+		except socket.error as e:
 			self.checksLogger.debug('Unable to get hostname: ' + str(e))
 		
 		self.checksLogger.debug('doChecks: payloads built, convert to json')
@@ -1326,7 +1323,7 @@ class checks:
 		
 		payloadHash = md5(payload).hexdigest()
 
-		postBackData = urllib.urlencode({'payload' : payload, 'hash' : payloadHash})
+		postBackData = urllib.parse.urlencode({'payload' : payload, 'hash' : payloadHash})
 
 		self.checksLogger.debug('doChecks: hashed, doPostBack')
 

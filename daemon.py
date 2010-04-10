@@ -48,7 +48,7 @@ class Daemon:
 			if pid > 0:
 				# Exit first parent
 				sys.exit(0) 
-		except OSError, e: 
+		except OSError as e: 
 			sys.stderr.write("fork #1 failed: %d (%s)\n" % (e.errno, e.strerror))
 			sys.exit(1)
 		
@@ -63,7 +63,7 @@ class Daemon:
 			if pid > 0:
 				# Exit from second parent
 				sys.exit(0) 
-		except OSError, e: 
+		except OSError as e: 
 			sys.stderr.write("fork #2 failed: %d (%s)\n" % (e.errno, e.strerror))
 			sys.exit(1) 
 	
@@ -78,7 +78,7 @@ class Daemon:
 			os.dup2(so.fileno(), sys.stdout.fileno())
 			os.dup2(se.fileno(), sys.stderr.fileno())
 		
-		print "Started"
+		print("Started")
 		
 		# Write pidfile
 		atexit.register(self.delpid) # Make sure pid file is removed if we quit
@@ -93,7 +93,7 @@ class Daemon:
 		Start the daemon
 		"""
 		
-		print "Starting..."
+		print("Starting...")
 		
 		# Check for a pidfile to see if the daemon already runs
 		try:
@@ -119,7 +119,7 @@ class Daemon:
 		Stop the daemon
 		"""
 		
-		print "Stopping..."
+		print("Stopping...")
 		
 		# Get the pid from the pidfile
 		try:
@@ -139,16 +139,16 @@ class Daemon:
 			while 1:
 				os.kill(pid, SIGTERM)
 				time.sleep(0.1)
-		except OSError, err:
+		except OSError as err:
 			err = str(err)
 			if err.find("No such process") > 0:
 				if os.path.exists(self.pidfile):
 					os.remove(self.pidfile)
 			else:
-				print str(err)
+				print(str(err))
 				sys.exit(1)
 		
-		print "Stopped"
+		print("Stopped")
 
 	def restart(self):
 		"""
