@@ -57,6 +57,17 @@ class Cassandra(object):
         Rack             : 76
         Exceptions       : 0
 
+        v 1.0.8
+        Token            : 108626453791023819065528501065129902511
+        Gossip active    : True
+        Load             : 224.08 KB
+        Generation No    : 1335061339
+        Uptime (seconds) : 41
+        Heap Memory (MB) : 30.65 / 1004.00
+        Data Center      : datacenter1
+        Rack             : rack1
+        Exceptions       : 0
+
         According to io/util/FileUtils.java units for load are:
         TB/GB/MB/KB/bytes
         """
@@ -122,6 +133,7 @@ class Cassandra(object):
 
     def _parseTpstats(self, cfstats, results):
         """
+        v 0.7
         Pool Name                    Active   Pending      Completed
         ReadStage                         0         0              1
         RequestResponseStage              0         0              0
@@ -136,6 +148,31 @@ class Cassandra(object):
         MiscStage                         0         0              0
         FlushSorter                       0         0              0
         InternalResponseStage             0         0              0
+
+        v 1.0
+        Pool Name                    Active   Pending      Completed   Blocked  All time blocked
+        ReadStage                         0         0              0         0                 0
+        RequestResponseStage              0         0              0         0                 0
+        MutationStage                     0         0              7         0                 0
+        ReadRepairStage                   0         0              0         0                 0
+        ReplicateOnWriteStage             0         0              0         0                 0
+        GossipStage                       0         0              0         0                 0
+        AntiEntropyStage                  0         0              0         0                 0
+        MigrationStage                    0         0              0         0                 0
+        MemtablePostFlusher               0         0              4         0                 0
+        StreamStage                       0         0              0         0                 0
+        FlushWriter                       0         0              4         0                 0
+        MiscStage                         0         0              0         0                 0
+        InternalResponseStage             0         0              0         0                 0
+        HintedHandoff                     0         0              0         0                 0
+
+        Message type           Dropped
+        RANGE_SLICE                  0
+        READ_REPAIR                  0
+        BINARY                       0
+        READ                         0
+        MUTATION                     0
+        REQUEST_RESPONSE             0
         """
 
         
@@ -154,7 +191,8 @@ class Cassandra(object):
         
     def _parseCfstats(self, tpstats, results):
         """
-        ----------------
+        v0.7
+        
         Keyspace: Intake
         	Read Count: 0
         	Read Latency: NaN ms.
@@ -200,6 +238,39 @@ class Cassandra(object):
         		Compacted row minimum size: 149
         		Compacted row maximum size: 179
         		Compacted row mean size: 149
+        	
+        v1.0
+        Keyspace: Intake
+                Read Count: 0
+                Read Latency: NaN ms.
+                Write Count: 1
+                Write Latency: 11.85 ms.
+                Pending Tasks: 0
+                        Column Family: Events
+                        SSTable count: 0
+                        Space used (live): 0
+                        Space used (total): 0
+                        Number of Keys (estimate): 0
+                        Memtable Columns Count: 0
+                        Memtable Data Size: 0
+                        Memtable Switch Count: 0
+                        Read Count: 0
+                        Read Latency: NaN ms.
+                        Write Count: 0
+                        Write Latency: NaN ms.
+                        Pending Tasks: 0
+                        Bloom Filter False Postives: 0
+                        Bloom Filter False Ratio: 0.00000
+                        Bloom Filter Space Used: 0
+                        Key cache capacity: 86400
+                        Key cache size: 0
+                        Key cache hit rate: NaN
+                        Row cache capacity: 3600
+                        Row cache size: 0
+                        Row cache hit rate: NaN
+                        Compacted row minimum size: 0
+                        Compacted row maximum size: 0
+                        Compacted row mean size: 0
         """
 
 
