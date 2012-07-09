@@ -110,10 +110,14 @@ class ElasticSearch(Check):
                 socket.gethostname().decode('utf-8'),
                 socket.getfqdn().decode('utf-8')
             )
-            if node_data['hostname'].decode('utf-8') in hostnames:
+            # 0.19
+            if node_data.get('hostname') is not None and node_data['hostname'].decode('utf-8') in hostnames:
                 def process_metric(metric, xtype, path):
                     self._process_metric(node_data, metric, path)
                 self._map_metric(process_metric)
+            # 0.18
+            else:
+                pass
 
     def check(self, config):
         """Extract data from stats URL
@@ -136,13 +140,11 @@ http://www.elasticsearch.org/guide/reference/api/admin-cluster-nodes-stats.html
 
         self.logger.info("Fetching elasticsearch data from: %s" % url)
 
-        data = None
         try:
             data = self._get_data(config, url)
+            self._process_data(config, data)
+            return self.get_metrics()
         except:
             self.logger.exception('Unable to get elasticsearch statistics')
             return False
 
-        self._process_data(config, data)
-
-        return self.get_metrics()
